@@ -23,4 +23,16 @@ YEAR(S.[sale_date])= '2023'
 GROUP BY CI.[city_name];
 ```
 ## 3. Sales Count for Each Product
---How many units of each coffee product have been sold?
+How many units of each coffee product have been sold?
+```sql
+SELECT P.product_id,
+		P.product_name,
+		COUNT(S.[sale_id]) AS Units_sold
+FROM [dbo].[products] P
+LEFT JOIN [dbo].[sales] S
+ON P.product_id= S.product_id
+GROUP BY P.product_id, P.product_name;
+```
+## 4. Average Sales Amount per City
+What is the average sales amount per customer in each city?
+```sql
