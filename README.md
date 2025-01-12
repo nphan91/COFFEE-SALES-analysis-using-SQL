@@ -160,7 +160,7 @@ FROM sales_with_lag
 WHERE previous_month_sales IS NOT NULL
 ORDER BY city_name, year, month;
 ```
-## 10 Market Potential Analysis
+## 10. Market Potential Analysis
 Identify top 3 city based on highest sales, return city name, total sale, total rent, total customers, estimated coffee consumer
 ```sql
 WITH city_sales AS (
