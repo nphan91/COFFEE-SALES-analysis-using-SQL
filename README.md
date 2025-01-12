@@ -121,4 +121,79 @@ JOIN
     [dbo].[city] CI ON CT.city_name = CI.city_name
 ORDER BY avg_sale_per_customer DESC;
 ```
-
+## 9. Monthly Sales Growth
+Sales growth rate: Calculate the percentage growth (or decline) in sales over different time periods (monthly).
+Optimized Monthly Sales Growth by City
+```sql
+WITH monthly_sales AS (
+    SELECT 
+        ci.city_name,
+        MONTH(s.sale_date) AS month,
+        YEAR(s.sale_date) AS year,
+        SUM(s.total) AS total_sales
+    FROM sales AS s
+    JOIN customers AS c
+        ON c.customer_id = s.customer_id
+    JOIN city AS ci
+        ON ci.city_id = c.city_id
+    GROUP BY ci.city_name, YEAR(s.sale_date), MONTH(s.sale_date)
+),
+sales_with_lag AS (
+    SELECT
+        city_name,
+        month,
+        year,
+        total_sales AS current_month_sales,
+        LAG(total_sales) OVER (PARTITION BY city_name ORDER BY year, month) AS previous_month_sales
+    FROM monthly_sales
+)
+SELECT
+    city_name,
+    month,
+    year,
+    current_month_sales,
+    previous_month_sales,
+    ROUND(
+        (current_month_sales - previous_month_sales) * 100.0 / NULLIF(previous_month_sales, 0), 2
+    ) AS growth_percentage
+FROM sales_with_lag
+WHERE previous_month_sales IS NOT NULL
+ORDER BY city_name, year, month;
+```
+## 10 Market Potential Analysis
+Identify top 3 city based on highest sales, return city name, total sale, total rent, total customers, estimated coffee consumer
+```sql
+WITH city_sales AS (
+    SELECT 
+        ci.city_name,
+        SUM(s.total) AS total_sales,
+        SUM(ci.estimated_rent) AS total_rent,
+        COUNT(DISTINCT c.customer_id) AS total_customers,
+        ROUND(ci.population * 0.25, 0) AS estimated_coffee_consumers
+    FROM sales AS s
+    JOIN customers AS c
+        ON s.customer_id = c.customer_id
+    JOIN city AS ci
+        ON c.city_id = ci.city_id
+    GROUP BY ci.city_name, ci.population
+),
+ranked_cities AS (
+    SELECT 
+        city_name,
+        total_sales,
+        total_rent,
+        total_customers,
+        estimated_coffee_consumers,
+        RANK() OVER (ORDER BY total_sales DESC) AS rank_by_sales
+    FROM city_sales
+)
+SELECT 
+    city_name,
+    total_sales,
+    total_rent,
+    total_customers,
+    estimated_coffee_consumers
+FROM ranked_cities
+WHERE rank_by_sales <= 3
+ORDER BY total_sales DESC;
+```
