@@ -93,32 +93,34 @@ Find each city and their average sale per customer and avg rent per customer
 ```sql
 WITH city_table AS (
     SELECT 
+        CI.city_id,
         CI.city_name,
         SUM(S.total) AS total_revenue,
         COUNT(DISTINCT CU.customer_id) AS total_customers,
         ROUND(
-            SUM(S.total) * 1.0 / COUNT(DISTINCT CU.customer_id), 2
+            SUM(S.total) * 1.0 / NULLIF(COUNT(DISTINCT CU.customer_id), 0), 2
         ) AS avg_sale_per_customer
     FROM 
-        [dbo].[sales] S
-    JOIN 
-        [dbo].[customers] CU ON CU.customer_id = S.customer_id
-    JOIN 
-        [dbo].[city] CI ON CI.city_id = CU.city_id
-    GROUP BY CI.city_name
+        [dbo].[city] CI
+    LEFT JOIN 
+        [dbo].[customers] CU ON CU.city_id = CI.city_id
+    LEFT JOIN 
+        [dbo].[sales] S ON S.customer_id = CU.customer_id
+    GROUP BY CI.city_id, CI.city_name
 )
 SELECT 
     CT.city_name,
     CT.avg_sale_per_customer,
     CI.estimated_rent,
     ROUND(
-        CI.estimated_rent * 1.0 / CT.total_customers, 2
+        CI.estimated_rent * 1.0 / NULLIF(CT.total_customers, 0), 2
     ) AS avg_rent_per_customer
 FROM 
     city_table CT
 JOIN 
-    [dbo].[city] CI ON CT.city_name = CI.city_name
-ORDER BY avg_sale_per_customer DESC;
+    [dbo].[city] CI ON CT.city_id = CI.city_id
+ORDER BY CT.avg_sale_per_customer DESC;
+
 ```
 ## 9. Monthly Sales Growth
 Sales growth rate: Calculate the percentage growth (or decline) in sales over different time periods (monthly).
