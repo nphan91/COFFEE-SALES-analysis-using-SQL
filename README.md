@@ -80,10 +80,9 @@ ORDER BY [city_name], Sales_Volumn DESC;
 ## 7. Customer Segmentation by City
 How many unique customers are there in each city who have purchased coffee products?
 ```sql
-SELECT DISTINCT 
-		CI.[city_id], 
+SELECT  CI.[city_id], 
 		CI.city_name,
-		COUNT(CU.[customer_id]) AS no_customers_by_city
+		COUNT(DISTINCT CU.[customer_id]) AS no_customers_by_city
 FROM [dbo].[customers] CU
 LEFT JOIN [dbo].[city] CI
 ON CU.city_id = CI.city_id
